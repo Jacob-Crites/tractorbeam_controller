@@ -8,6 +8,7 @@ import numpy as np
 import math
 import sys
 import time
+from datetime import datetime
 
 import rclpy.time
 import rclpy.timer
@@ -59,7 +60,8 @@ class Controller(Node):
         #self.get_logger().info("Vehicle Linear Acceleration: %s" )
         #self.get_logger().info("Vehicle Angular Velocity: %s" )
         #Integral Controller Initial values
-        Controller.last_time = rclpy.time.Time()
+        #Controller.last_time = self.get_clock().now()      #Python clock
+        Controller.last_time = rclpy.time.Time().nanoseconds / 1000000000            #ROS clock
         Controller.di_Thr = 0
         Controller.di_Str = 0
 
@@ -90,8 +92,8 @@ class Controller(Node):
             Kd_throttle = 1
             Kd_steer = 1
 
-            Ki_throttle = 0
-            Ki_steer = 0
+            Ki_throttle = 1
+            Ki_steer = 1
 
             #For Derivative Error
             current_dThrot = self.current_velThr
@@ -113,18 +115,18 @@ class Controller(Node):
             #print 'error_align' ; error_align
 
             #Compute Integral Error delta t
-            #Controller.current_time = rclpy.time.Time()
-            #dt = Controller.current_time - Controller.last_time()
+            #Controller.current_time = self.get_clock().now()                        #Python Clock 
+            Controller.current_time = rclpy.time.Time().nanoseconds / 1000000000     #ROS clock
+            dt = Controller.current_time - Controller.last_time
 
             #Compute Integral Error
-            #Controller.di_Thr = Controller.di_Thr + dt*error_distance
-            #Controller.di_Str = Controller.di_Str + dt*error_align
-
+            Controller.di_Thr = Controller.di_Thr + dt*error_distance
+            Controller.di_Str = Controller.di_Str + dt*error_align
             
 
             #Generate Control Signals
-            uv_throttle = Kp_throttle*error_distance + Kd_throttle*(-current_dThrot) #+ Ki_throttle*Controller.di_Thr
-            uv_steering = Kp_steer*error_align + Kd_steer*(-current_dStr) #+ Ki_steer*Controller.di_Str
+            uv_throttle = Kp_throttle*error_distance + Kd_throttle*(-current_dThrot) + Ki_throttle*Controller.di_Thr
+            uv_steering = Kp_steer*error_align + Kd_steer*(-current_dStr) + Ki_steer*Controller.di_Str
 
             #Acceleration Limit
             #Insert if needed
