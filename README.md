@@ -1,2 +1,2 @@
 # tractorbeam_controller
-PID Controller for the Tractor Beam senior design project
+ROS2 PID Controller for the Tractor Beam senior design project
